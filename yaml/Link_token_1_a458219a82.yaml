@@ -1,0 +1,365 @@
+openapi: 3.0.3
+info:
+  title: Link Token Service
+  version: 1.0.0
+servers:
+  - url: https://dev.abdm.gov.in
+    description: Sandbox Server URL
+  - url: https://apis.abdm.gov.in
+    description: Production Server URL
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    apikeyAuth:
+      type: http
+      scheme: apikey
+    noauthAuth:
+      type: http
+      scheme: noauth
+    basicAuth:
+      type: http
+      scheme: basic
+  
+paths:
+  /api/hiecm/v3/token/generate-token:
+    post:
+      tags:
+        - abdm-link-token-hip
+      operationId: abdm-link-token 1
+      summary: API used to generate link token to link the health records
+      description: "This API endpoint is used to generate a link token which will be valid for 6 months.. This token can be utilized for Health Information Provider (HIP) Initiated Linking, enabling HIPs to securely link patient health records to their ABHA (Ayushman Bharat Health Account) address. The generated token ensures that the linking process is authenticated and authorized, maintaining the integrity and security of health information exchange. This functionality is crucial for facilitating seamless and efficient linking of health records within the healthcare ecosystem.<ol type='a'><li><b>Authorization:</b> We are passing the access-token in the authorization [Example: Bearer  eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJBbFJiNVd]</li></ol>"
+
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: REQUEST-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+          description: Unique UUID for track the end to end request transaction
+        - name: TIMESTAMP
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '2022-10-06T15:10:00.587Z'
+          description: >-
+            Actual time of the request was initiated, ISO 8601 represents date and
+            time by starting with the year, followed by the month, the day, the
+            hour, the minutes, seconds and milliseconds
+        - name:  X-CM-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: sbx
+          description: Suffix of the consent manager to which the request was intended
+        - name: X-HIP-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: IN2810014366
+          description: Identifier of the health information provider to which the request was intended
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              description: In the request body, either 'abhaNumber' or 'abhaAddress' must be included, with atleast one being mandatory based on the patient profile.
+              type: object
+              required:
+                - abhaAddress
+                - name
+                - gender
+                - yearOfBirth
+              properties:
+                abhaNumber:
+                  type: number
+                  nullable: true
+                  example: 12345678901234
+                  description: it can be null if abhaNumber is not linked with abhaAddress. Allows numeric character like ^\d{14}$
+                abhaAddress:
+                  type: string
+                  nullable: true
+                  example: abc@abdm
+                  description: abhaAddress of the user/patient. Allows alpha numeric character and special characters like ^[a-zA-Z0-9][a-zA-Z0-9_.]+[a-zA-Z0-9]@(abdm|sbx)$
+                name:
+                  type: string
+                  nullable: false
+                  example: first_name + middle_name + last_name
+                  description: Only alphabets and special characters like ',.- are allowed like ^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$
+                gender:
+                  type: string
+                  nullable: false
+                  example: M
+                  description: Allows M, F, O, D, T, U as a input
+                yearOfBirth:
+                  type: number
+                  nullable: false
+                  example: 9999
+                  description: Year of birth must be 4 digit, ranging between 1900 and 2200
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1035"
+                      message:
+                        type: string
+                        example: "Invalid HIP ID"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900902"
+                  message:
+                    type: string
+                    example: Unauthorized
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure your API invocation call has a header: 'Authorization : Bearer ACCESS_TOKEN' or 'Authorization : Basic ACCESS_TOKEN' or 'apikey: API_KEY'
+        "403":
+          description: Forbidden
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Access Denied
+        "404":
+          description: server cannot find the requested resource
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900900"
+                  message:
+                    type: string
+                    example: Unclassified Authentication Failure
+                  description:
+                    type: string
+                    example: >-
+                      Access failure for API: /hiecm/api/v3, version: v3 status: (900900) - Unclassified Authentication Failure
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - code
+                  - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  <callback_url>/api/v3/hip/token/on-generate-token:
+    post:
+      tags:
+        - abdm-link-token-hip
+      operationId: link-token 1
+      summary: This is a call back API of [/api/hiecm/v3/token/generate-token].
+      description: >-
+        "This API endpoint serves as a callback for the /api/hiecm/v3/token/generate-token API which will by the HIE-CM, the HIE-CM will validate the request and if everything is correct, a link token will be generated and is provided in the call-back API, or If anything incorrect in the request which demographics details then it will give the error in the same call back API. It is used to handle the response from the token generation process, ensuring that the HIP can securely manage and utilize the generated link token. This callback mechanism is essential for maintaining the integrity and security of the token-based linking process, supporting seamless and efficient health information exchange within the healthcare ecosystem."
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: REQUEST-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+          description: Unique UUID for track the end to end request transaction
+        - name: TIMESTAMP
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '2022-10-06T15:10:00.587Z'
+          description: >-
+            Actual time of the request was initiated, ISO 8601 represents date and
+            time by starting with the year, followed by the month, the day, the
+            hour, the minutes, seconds and milliseconds
+        - name:  X-CM-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: sbx
+          description: Suffix of the consent manager to which the request was intended
+        - name: X-HIP-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: IN2810014366
+          description: Identifier of the health information provider to which the request was intended
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required:
+                    - abhaAddress
+                    - response
+                  properties:
+                    abhaAddress:
+                      type: string
+                      nullable: false
+                      example: abc@abdm
+                    linkToken:
+                      type: string
+                      format: bearer
+                      nullable: true
+                      example: >-
+                        eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJ2YXNhbnRoYWt1bWFyLmtlc2F2
+                    response:
+                      type: object
+                      nullable: false
+                      required:
+                        - requestId
+                      properties:
+                        requestId:
+                          type: string
+                          format: uuid
+                          nullable: false
+                          example: 6f0b4665-a915-4c92-aa36-65afb4a2cd71
+                          description: The requestId that was passed
+
+                - type: object
+                  required:
+                    - error
+                    - message
+                  properties:
+                    error:
+                      type: object
+                      nullable: false
+                      required:
+                        - code
+                        - message
+                      properties:
+                        code:
+                          type: string
+                          nullable: false
+                          example: ABDM-1027
+                        message:
+                          type: string
+                          nullable: false
+                          example: You are blocked. Please try again after 24 hours.
+                    response:
+                      type: object
+                      nullable: false
+                      required:
+                        - requestId
+                      properties:
+                        requestId:
+                          type: string
+                          format: uuid
+                          nullable: false
+                          example: 6f0b4665-a915-4c92-aa36-65afb4a2cd71
+                          description: The requestId that was passed
+
+                - type: object
+                  required:
+                    - error
+                    - message
+                  properties:
+                    error:
+                      type: object
+                      nullable: false
+                      required:
+                        - code
+                        - message
+                      properties:
+                        code:
+                          type: string
+                          nullable: false
+                          example: ABDM-1051
+                        message:
+                          type: string
+                          nullable: false
+                          example: Invalid ABHA Number or ABHA Address
+                    response:
+                      type: object
+                      nullable: false
+                      required:
+                        - requestId
+                      properties:
+                        requestId:
+                          type: string
+                          format: uuid
+                          nullable: false
+                          example: 6f0b4665-a915-4c92-aa36-65afb4a2cd71
+                          description: The requestId that was passed
+
+                - type: object
+                  required:
+                    - error
+                    - message
+                  properties:
+                    error:
+                      type: object
+                      nullable: false
+                      required:
+                        - code
+                        - message
+                      properties:
+                        code:
+                          type: string
+                          nullable: false
+                          example: ABDM-1024
+                        message:
+                          type: string
+                          nullable: false
+                          example: Dependent service unavailable
+                    response:
+                      type: object
+                      nullable: false
+                      required:
+                        - requestId
+                      properties:
+                        requestId:
+                          type: string
+                          format: uuid
+                          nullable: false
+                          example: 6f0b4665-a915-4c92-aa36-65afb4a2cd71
+                          description: The requestId that was passed
+      responses:
+        "200":
+          description: OK

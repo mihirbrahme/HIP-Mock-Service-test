@@ -1,0 +1,1312 @@
+openapi: 3.0.2
+info:
+  title: HIE-CM Profile Share
+  version: "3.0"
+servers:
+  - url: https://dev.abdm.gov.in
+    description: Sandbox Server URL
+  - url: https://apis.abdm.gov.in
+    description: Production Server URL
+components:
+   securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    apikeyAuth:
+      type: http
+      scheme: apikey
+    noauthAuth:
+      type: http
+      scheme: noauth
+    basicAuth:
+      type: http
+      scheme: basic
+
+paths:
+  <callback_url>/api/v3/hip/patient/share:
+    post:
+      tags:
+        - abdm-patient-share-hip
+      operationId: patient-share 1
+      summary: >-
+        This API will be invoked to the HIP for sharing the response of HIECM's /api/hiecm/patient-share/v3/share API
+      description: >-
+        This is a API will be invoked to the <b>HIP</b> to share the response of HIECM's /api/hiecm/patient-share/v3/share API. <ol type='1'> <li> <b>Header</b>  <ol type='a'> <br/> <li>REQUEST-ID unique UUID[ Example: 18235d89-cb13-479d-ad71-7a57d5f669a8 ]</li> <li>TIMESTAMP  actual time of the requested was initiated[ Example: 2022-10-06T10:10:00.587Z ]</li> <li>X-HIP-ID</li> 
+        <li>Authorization will be provided by the gateway session API after the successful verification of client ID and Secret [ Example: eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJ2YXNhbnRoYWt1bWFyLmtlc2F2 ]</li></ol> </li> <br/><li> <b>Request Body</b> <ol type='a'><br/> <li>intent This is a key value pair  which contains the purpose [ Example: {purpose: PROFILE_SHARE } ]</li> <li>metaData This is a key value pair which contains the location longitude and latitude[ Example: {hip_id: ABDM_HIP, context: 123, lat: 20.5937 long: 78.9629} ]</li> <li>profile which contains user details.</li> </ol></ol>
+    
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: REQUEST-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+          description: Unique UUID for track the end to end request transaction
+        - name: TIMESTAMP
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '2022-10-06T15:10:00.587Z'
+          description: >-
+            Actual time of the request was initiated, ISO 8601 represents date and
+            time by starting with the year, followed by the month, the day, the
+            hour, the minutes, seconds and milliseconds    
+        - name: X-HIP-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: IN2810014366
+          description: Identifier of the health information provider to which the request was intended
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - intent
+                - metaData
+                - profile
+              properties:
+                intent:
+                  type: string
+                  nullable: false
+                  enum:
+                    - PROFILE_SHARE
+                    - RECORD_SHARE
+                    - PAYMENT_SHARE
+                  example: PROFILE_SHARE
+                  description: The intention of share API call
+                metaData:
+                  type: object
+                  nullable: false
+                  required:
+                    - hipId
+                    - context
+                    - latitude
+                    - longitude
+                  properties:
+                    hipId:
+                      type: string
+                      nullable: false
+                      example: HIP_1
+                      description: The service ID of the health information provider. Allows alpha numeric character and special characters like [A-Z a-z 0-9]+[A-Z a-z 0-9 @//_//-]*[A-Z a-z 0-9]
+                    context:
+                      type: string
+                      nullable: false
+                      example: 6
+                      description: This is a counter Id. Allows alpha numeric character and special characters like ^(?:[a-zA-Z0-9 ]|[a-zA-Z0-9 ][a-zA-Z0-9.\\-_ ]*[a-zA-Z0-9 ]){1,250}$
+                    hprId:
+                      type: string
+                      nullable: true
+                      example: abdulkalam@hpr.abdm
+                      description: Healthcare Professionals Registry id. Allows alpha numeric character and special characters like [a-zA-Z0-9][a-zA-Z0-9_.]+[a-zA-Z0-9]@(dr.abdm|hpr.abdm)$|^[1-9][0-9]{13}$
+                    latitude:
+                      type: number
+                      format: float
+                      nullable: true
+                      example: 20.5937
+                      description: The latitude of the location.Allows alpha numeric character and special characters like ^[0-9-.]+$
+                    longitude:
+                      type: number
+                      format: float
+                      nullable: true
+                      example: 78.9629
+                      description: The longitude of the location.Allows alpha numeric character and special characters like ^[0-9-.]+$
+                profile:
+                  type: object
+                  nullable: false
+                  description: This should populated only for PROFILE_SHARE
+                  required:
+                    - patient
+                  properties:
+                    patient:
+                      type: object
+                      nullable: false
+                      required:
+                        - abhaAddress
+                        - name
+                        - gender
+                        - yearOfBirth
+                        - address
+                        - phoneNumber
+                      properties:
+                        abhaNumber:
+                          type: string
+                          nullable: true
+                          example: 91-7507-6821-7770
+                          description: >-
+                            The abha number of the patient.It should be passed based on the X-AUTH-TOKEN. Should be only 14 digit. Allows alpha numeric character and special characters like ^(\\d+-?){13}\\d$
+                        abhaAddress:
+                          type: string
+                          nullable: false
+                          example: abc@sbx
+                          description: >-
+                            The abha address of the patient. Should start with Alphanumeric . and  _  in the middle and must be ending with @abdm or @sbx and Allows alpha numeric character and special characters like ^[a-zA-Z0-9][a-zA-Z0-9_.\-!]+[a-zA-Z0-9]@(abdm|sbx)$
+                        name:
+                          type: string
+                          nullable: false
+                          example: Abdul Kalam
+                          description: >-
+                            The name of the patient. Allows alpha numeric character and special characters like ^[a-zA-Z0-9.-_,]+(([',. -][a-zA-Z0-9. ])?[a-zA-Z0-9. ]*)*$
+                        gender:
+                          type: string
+                          enum:
+                            - M
+                            - F
+                            - O
+                            - D
+                            - T
+                            - U
+                          nullable: false
+                          example: M
+                          description: The gender of the patient
+                        dayOfBirth:
+                          type: string
+                          format: number
+                          nullable: true
+                          example: 1
+                          description: >-
+                            The day of birth of the patient. Only allows numeric values between 1 abd 31 and ^(?!\\s*$)(0?[1-9]|[12][0-9]|3[01])$
+                        monthOfBirth:
+                          type: string
+                          format: number
+                          nullable: true
+                          example: 8
+                          description: >-
+                            The month of birth of the patient. Only allows numeric values between 1 abd 12 and ^(?!\\s*$)(0?[1-9]|[1][0-2])$
+                        yearOfBirth:
+                          type: string
+                          format: number
+                          nullable: false
+                          example: 9999
+                          description: >-
+                            The month of birth of the patient. Only allows numeric values and must be 4 digit ranging between 1900 and 2200 and ^(?!\\s*$)(19|20|21|22)\\d{2}$
+
+                        address:
+                          type: object
+                          required:
+                            - line
+                          properties:
+                            line:
+                              type: string
+                              nullable: true
+                              example: Address line 1
+                              description: The address line
+                            district:
+                              type: string
+                              nullable: true
+                              example: Coimbatore
+                              description: The district and should only contain alphabets
+                            state:
+                              type: string
+                              nullable: false
+                              example: Tamil Nadu
+                              description: The state and should only contain alphabets like [A-Z a-z]+[A-Z a-z //' ']*$
+                            pincode:
+                              type: string
+                              nullable: false
+                              example: 641050
+                              description: Should be 5 digits and only contain numbers
+                        phoneNumber:
+                          type: string
+                          nullable: true
+                          example: 9876543210
+                          description: >-
+                            The mobile number of the patient. Must be 10 digit and contain only 0-9 and it allows only numbers like ^(\+\d{1,3}[- ]?)?\d{10}$
+      responses:
+        "200":
+          description: OK
+        "408":
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1007: "
+                      message:
+                        type: string
+                        example: Connection failed due to timeout
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900900"
+                  message:
+                    type: string
+                    example: Unclassified Authentication Failure
+                  description:
+                    type: string
+                    example: >-
+                      Access failure for API: /hiecm/api/v3, version: v3 status: (900900) - Unclassified Authentication Failure
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - code
+                  - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  /api/hiecm/patient-share/v3/on-share:
+    post:
+      tags:
+        - abdm-patient-share-hip
+      operationId: patient-share 2
+      summary: >-
+        This API will be invoked by the HIP for sharing the response of HIECM's /api/hiecm/patient-share/v3/on-share API
+      description: >-
+        This is a API will be invoked by the <b>HIP</b> to share the response of HIECM's /api/hiecm/patient-share/v3/on-share API. <ol type='1'> <li> <b>Header</b>  <ol type='a'> <br/> <li>AUTHORIZATION will be provided by the gateway session API after the successful verification of client ID and Secret [ Example: eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJ2YXNhbnRoYWt1bWFyLmtlc2F2 ]</li> <li>REQUEST-ID unique UUID[ Example: 18235d89-cb13-479d-ad71-7a57d5f669a8 ]</li> <li>TIMESTAMP  actual time of the requested was initiated[ Example: 2022-10-06T10:10:00.587Z ]</li> <li>X-CM-ID  consent manager ID[ Example: sbx ]</li> </ol> </li> <br/> <li> <b>Request Body</b> <ol type='a'><br/><li>Incase of success scenario,acknowledgement is mandatory and error is optional </li> <li>Incase of failure scenario,error is mandatory and acknowledgment is optional</li> <li>response is mandatory object in both the cases</li> </ol>
+     
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: REQUEST-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+          description: Unique UUID for track the end to end request transaction
+        - name: TIMESTAMP
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '2022-10-06T15:10:00.587Z'
+          description: >-
+            Actual time of the request was initiated, ISO 8601 represents date and
+            time by starting with the year, followed by the month, the day, the
+            hour, the minutes, seconds and milliseconds
+        - name:  X-CM-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: sbx
+          description: Suffix of the consent manager to which the request was intended
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              description: "In the request body, either ‘acknowledgement’ or ‘error’ must be included.<br> <ol type='a'><br/> <li>Incase of success scenario,acknowledgement is mandatory and error is optional </li> <li>Incase of failure scenario,error is mandatory and acknowledgment is optional</li> <li>response is mandatory object in both the cases</li> </ol>"
+              oneOf:
+                - type: object
+                  required:
+                    - acknowledgement
+                    - error
+                    - response
+                  properties:
+                    acknowledgement:
+                      type: object
+                      nullable: false
+                      required:
+                        - abhaAddress
+                        - status
+                        - profile
+                      properties:
+                        status:
+                          type: string
+                          nullable: false
+                          example: SUCCESS
+                          description: The status of the transaction.Allows like (SUCCESS|FAILED)
+                        abhaAddress:
+                          type: string
+                          nullable: false
+                          example: abc@abdm
+                          description: >-
+                            The abha address of the patient. Should start with Alphanumeric . and  _  in the middle and must be ending with @abdm or @sbx and Allows alpha numeric character and special characters like ^[a-zA-Z0-9][a-zA-Z0-9_.\-!]+[a-zA-Z0-9]@(abdm|sbx)$
+                        profile:
+                          type: object
+                          description: >-
+                            Should be populated only if this is a response for PROFILE_SHARE request
+                          required:
+                            - context
+                            - tokenNumber
+                            - expiry
+                          properties:
+                            context:
+                              type: string
+                              nullable: false
+                              example: 43
+                              description: This is a counter Id. Allows alpha numeric character and special characters like ^(?:[a-zA-Z0-9 ]|[a-zA-Z0-9 ][a-zA-Z0-9.\\-_ ]*[a-zA-Z0-9 ]){1,250}$
+                            tokenNumber:
+                              type: string
+                              nullable: false
+                              example: 3
+                              description: >-
+                                The token number generated at HIP for the request
+                            expiry:
+                              type: number
+                              nullable: false
+                              example: 180
+                              description: The expiry time and should be only numeric value.Allows alpha numeric character and special characters like [\d]*$
+                    error:
+                      type: object
+                      nullable: false
+                      description: "error is optional object in case of Sucess response."
+                      required:
+                        - code
+                        - message
+                      properties:
+                        code:
+                          type: string
+                          nullable: false
+                          example: "ABDM-9999"
+                        message:
+                          type: string
+                          nullable: false
+                          example: string
+                    response:
+                      type: object
+                      nullable: false
+                      required:
+                        - requestId
+                      properties:
+                        requestId:
+                          type: string
+                          format: uuid
+                          nullable: false
+                          example: 6f0b4665-a915-4c92-aa36-65afb4a2cd71
+                          description: The requestId that was passed.Allows alpha numeric character and special characters like [0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: integer
+                        example: ABDM-1006
+                      message:
+                        type: string
+                        example: Bad Request, invalid request Body
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900901"
+                  message:
+                    type: string
+                    example: Invalid Credentials
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure you have provided the correct security credentials
+        "403":
+          description: Forbidden
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Access Denied
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "408":
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1007: "
+                      message:
+                        type: string
+                        example: Connection failed due to timeout
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1022: "
+                      message:
+                        type: string
+                        example: Too many requests
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900900"
+                  message:
+                    type: string
+                    example: Unclassified Authentication Failure
+                  description:
+                    type: string
+                    example: >-
+                      Access failure for API: /hiecm/api/v3, version: v3 status: (900900) - Unclassified Authentication Failure
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - code
+                  - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  /api/hiecm/patient-share/v3/share:
+    post:
+      tags:
+        - abdm-hiecm-patient-share-phr
+      operationId: abdm-patient-share-hip 1
+      summary: >-
+        This API will be invoked from the PHR-HIU application for sharing the patient/user profile with the HMIS/LIMS.
+      description: >-
+        This is a API will be invoked from the <b>PHR-HIU</b> to share the user/patient profile with HMIS/LIMS. <ol type='1'> <li> <b>Header</b>  <ol type='a'> <br/> <li>Authorization will be provided by the gateway session API after the successful verification of client ID and Secret [ Example: eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJ2YXNhbnRoYWt1bWFyLmtlc2F2 ]</li> <li>REQUEST-ID unique UUID[ Example: 18235d89-cb13-479d-ad71-7a57d5f669a8 ]</li> <li>TIMESTAMP  actual time of the requested was initiated[ Example: 2022-10-06T10:10:00.587Z ]</li> <li>X-AUTH-TOKEN JWT Authentication token which was issued by ABDM after successful validation of username and password[ Example: eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJ2YXNhbnRoYWt1bWFyLmtlc2F2 ]</li> <li>X-CM-ID  consent manager ID[ Example: sbx ]</li> <li>X-HIU-ID  HIU ID[ Example: HIU ]</li> </ol> </li> <br/> <li> <b>Request Body</b> <ol type='a'><br/> <li>intent This is a key value pair  which contains the purpose [ Example: {purpose: PROFILE_SHARE } ]</li> <li>metaData This is a key value pair which contains the location longitude and latitude[ Example: {hip_id: ABDM_HIP, context: 123, lat: 20.5937 long: 78.9629} ]</li> <li>profile which contains user details.</li> </ol> </ol>
+  
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: REQUEST-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+          description: Unique UUID for track the end to end request transaction
+        - name: TIMESTAMP
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '2022-10-06T15:10:00.587Z'
+          description: >-
+            Actual time of the request was initiated, ISO 8601 represents date and
+            time by starting with the year, followed by the month, the day, the
+            hour, the minutes, seconds and milliseconds
+        - name:  X-CM-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: sbx
+          description: Suffix of the consent manager to which the request was intended
+        - name: X-HIU-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: HIU_ID
+          description: Identifier of the health information user to which the request was intended
+        - name: X-AUTH-TOKEN
+          in: header
+          required: true
+          description: >-
+            JWT Authentication token which was issued by ABDM after successful validation of username and password
+          schema:
+            type: string
+            format: bearer
+            minimum: 1
+            maximum: 100
+            example: Bearer eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJ2YXNhbnRoYWt1bWFyLmtlc2F2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - intent
+                - metaData
+                - profile
+              properties:
+                intent:
+                  type: string
+                  nullable: false
+                  enum:
+                    - PROFILE_SHARE
+                    - RECORD_SHARE
+                    - PAYMENT_SHARE
+                  example: PROFILE_SHARE
+                  description: The intention of share API call
+                metaData:
+                  type: object
+                  nullable: false
+                  required:
+                    - hipId
+                    - context
+                    - latitude
+                    - longitude
+                  properties:
+                    hipId:
+                      type: string
+                      nullable: false
+                      example: HIP_1
+                      description: The service ID of the health information provider. Allows alpha numeric character and special characters like [A-Z a-z 0-9]+[A-Z a-z 0-9 @//_//-]*[A-Z a-z 0-9]
+                    context:
+                      type: string
+                      nullable: false
+                      example: 6
+                      description: This is a counter Id. Allows alpha numeric character and special characters like ^(?:[a-zA-Z0-9 ]|[a-zA-Z0-9 ][a-zA-Z0-9.\\-_ ]*[a-zA-Z0-9 ]){1,250}$
+                    hprId:
+                      type: string
+                      nullable: true
+                      example: abdulkalam@hpr.abdm
+                      description: Healthcare Professionals Registry id. Allows alpha numeric character and special characters like [a-zA-Z0-9][a-zA-Z0-9_.]+[a-zA-Z0-9]@(dr.abdm|hpr.abdm)$|^[1-9][0-9]{13}$
+                    latitude:
+                      type: number
+                      format: float
+                      nullable: true
+                      example: 20.5937
+                      description: The latitude of the location.Allows alpha numeric character and special characters like ^[0-9-.]+$
+                    longitude:
+                      type: number
+                      format: float
+                      nullable: true
+                      example: 78.9629
+                      description: The longitude of the location.Allows alpha numeric character and special characters like ^[0-9-.]+$
+                profile:
+                  type: object
+                  nullable: false
+                  description: This should populated only for PROFILE_SHARE
+                  required:
+                    - patient
+                  properties:
+                    patient:
+                      type: object
+                      nullable: false
+                      required:
+                        - abhaAddress
+                        - name
+                        - gender
+                        - yearOfBirth
+                        - address
+                        - phoneNumber
+                      properties:
+                        abhaNumber:
+                          type: string
+                          nullable: true
+                          example: 91-7507-6821-7770
+                          description: >-
+                            The abha number of the patient. Should be only 14 digit. Allows alpha numeric character and special characters like ^(\\d+-?){13}\\d$
+                        abhaAddress:
+                          type: string
+                          nullable: false
+                          example: abc@sbx
+                          description: >-
+                            The abha address of the patient. Should start with Alphanumeric . and  _  in the middle and must be ending with @abdm or @sbx and Allows alpha numeric character and special characters like ^[a-zA-Z0-9][a-zA-Z0-9_.\-!]+[a-zA-Z0-9]@(abdm|sbx)$
+                        name:
+                          type: string
+                          nullable: false
+                          example: Abdul Kalam
+                          description: >-
+                            The name of the patient. Allows alpha numeric character and special characters like ^[a-zA-Z0-9.-_,]+(([',. -][a-zA-Z0-9. ])?[a-zA-Z0-9. ]*)*$
+                        gender:
+                          type: string
+                          enum:
+                            - M
+                            - F
+                            - O
+                            - D
+                            - T
+                            - U
+                          nullable: false
+                          example: M
+                          description: The gender of the patient
+                        dayOfBirth:
+                          type: string
+                          format: number
+                          nullable: true
+                          example: 1
+                          description: >-
+                            The day of birth of the patient. Only allows numeric values between 1 abd 31 and ^(?!\\s*$)(0?[1-9]|[12][0-9]|3[01])$
+                        monthOfBirth:
+                          type: string
+                          format: number
+                          nullable: true
+                          example: 8
+                          description: >-
+                            The month of birth of the patient. Only allows numeric values between 1 abd 12 and ^(?!\\s*$)(0?[1-9]|[1][0-2])$
+                        yearOfBirth:
+                          type: string
+                          format: number
+                          nullable: false
+                          example: 9999
+                          description: >-
+                            The month of birth of the patient. Only allows numeric values and must be 4 digit ranging between 1900 and 2200 and ^(?!\\s*$)(19|20|21|22)\\d{2}$
+
+                        address:
+                          type: object
+                          required:
+                            - line
+                          properties:
+                            line:
+                              type: string
+                              nullable: true
+                              example: Address line 1
+                              description: The address line
+                            district:
+                              type: string
+                              nullable: true
+                              example: Coimbatore
+                              description: The district and should only contain alphabets
+                            state:
+                              type: string
+                              nullable: false
+                              example: Tamil Nadu
+                              description: The state and should only contain alphabets like [A-Z a-z]+[A-Z a-z //' ']*$
+                            pincode:
+                              type: string
+                              nullable: false
+                              example: 641050
+                              description: Should be 5 digits and only contain numbers
+                        phoneNumber:
+                          type: string
+                          nullable: true
+                          example: 9876543210
+                          description: >-
+                            The mobile number of the patient. Must be 10 digit and contain only 0-9 and it allows only numbers like ^(\+\d{1,3}[- ]?)?\d{10}$
+
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: integer
+                        example: ABDM-1006
+                      message:
+                        type: string
+                        example: Bad Request, invalid request Body
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900901"
+                  message:
+                    type: string
+                    example: Invalid Credentials
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure you have provided the correct security credentials
+        "403":
+          description: Forbidden
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Access Denied
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "408":
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1007: "
+                      message:
+                        type: string
+                        example: Connection failed due to timeout
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1022: "
+                      message:
+                        type: string
+                        example: Too many requests
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900900"
+                  message:
+                    type: string
+                    example: Unclassified Authentication Failure
+                  description:
+                    type: string
+                    example: >-
+                      Access failure for API: /hiecm/api/v3, version: v3 status: (900900) - Unclassified Authentication Failure
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - code
+                  - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  <callback_url>/api/v3/hiu/patient/on-share:
+    post:
+      tags:
+        - abdm-hiecm-patient-share-phr
+      operationId: profile-share 2
+      summary: >-
+        This API will be invoked to the HIU for sharing the response of HIECM's /api/hiecm/patient-share/v3/on-share API
+      description: >-
+        This is a API will be invoked by <b>HIU</b> to share the response of HIECM's /api/hiecm/patient-share/v3/on-share API. <ol type='1'> <li> <b>Header</b>  <ol type='a'> <br/> <li>Authorization will be provided by the gateway session API after the successful verification of client ID and Secret [ Example: eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJ2YXNhbnRoYWt1bWFyLmtlc2F2 ]</li> <li>REQUEST-ID unique UUID[ Example: 18235d89-cb13-479d-ad71-7a57d5f669a8 ]</li> <li>TIMESTAMP  actual time of the requested was initiated[ Example: 2022-10-06T10:10:00.587Z ]</li> <li>X-HIU-ID  HIU ID[ Example: HIU ]</li> </ol> </li> <br/> <li> <b>Request Body</b> <ol type='a'><br/> <li>Incase of success scenario,acknowledgement is mandatory and error is optional</li> <li>Incase if failure scenario,error is mandatory and acknowledgment is optional</li> <li>response is mandatory object in both the cases</li> </ol> </ol>
+    
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: REQUEST-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+          description: Unique UUID for track the end to end request transaction
+        - name: TIMESTAMP
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '2022-10-06T15:10:00.587Z'
+          description: >-
+            Actual time of the request was initiated, ISO 8601 represents date and
+            time by starting with the year, followed by the month, the day, the
+            hour, the minutes, seconds and milliseconds
+        - name: X-HIU-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: HIU_ID
+          description: Identifier of the health information user to which the request was intended
+        
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              description: "In the request body, either ‘acknowledgement’ or ‘error’ must be included.<br> <ol type='a'><br/> <li>Incase of success scenario,acknowledgement is mandatory and error is optional </li> <li>Incase of failure scenario,error is mandatory and acknowledgment is optional</li> <li>response is mandatory object in both the cases</li> </ol>"
+              oneOf:
+                - type: object
+                  required:
+                    - acknowledgement
+                    - error
+                    - response
+                  properties:
+                    acknowledgement:
+                      type: object
+                      nullable: false
+                      required:
+                        - abhaAddress
+                        - status
+                        - profile
+                      properties:
+                        status:
+                          type: string
+                          nullable: false
+                          example: SUCCESS
+                          description: The status of the transaction.Allows like (SUCCESS|FAILED)
+                        abhaAddress:
+                          type: string
+                          nullable: false
+                          example: abc@abdm
+                          description: >-
+                            The abha address of the patient. Should start with Alphanumeric . and  _  in the middle and must be ending with @abdm or @sbx and Allows alpha numeric character and special characters like ^[a-zA-Z0-9][a-zA-Z0-9_.\-!]+[a-zA-Z0-9]@(abdm|sbx)$
+                        profile:
+                          type: object
+                          description: >-
+                            Should be populated only if this is a response for PROFILE_SHARE request
+                          required:
+                            - context
+                            - tokenNumber
+                            - expiry
+                          properties:
+                            context:
+                              type: string
+                              nullable: false
+                              example: 43
+                              description: This is a counter Id. Allows alpha numeric character and special characters like ^(?:[a-zA-Z0-9 ]|[a-zA-Z0-9 ][a-zA-Z0-9.\\-_ ]*[a-zA-Z0-9 ]){1,250}$
+                            tokenNumber:
+                              type: string
+                              nullable: false
+                              example: 3
+                              description: >-
+                                The token number generated at HIP for the request
+                            expiry:
+                              type: number
+                              nullable: false
+                              example: 180
+                              description: The expiry time and should be only numeric value.Allows alpha numeric character and special characters like [\d]*$
+                    error:
+                      type: object
+                      nullable: false
+                      description: "error is optional object in case of Sucess response."
+                      required:
+                        - code
+                        - message
+                      properties:
+                        code:
+                          type: string
+                          nullable: false
+                          example: "ABDM-9999"
+                        message:
+                          type: string
+                          nullable: false
+                          example: string
+                    response:
+                      type: object
+                      nullable: false
+                      required:
+                        - requestId
+                      properties:
+                        requestId:
+                          type: string
+                          format: uuid
+                          nullable: false
+                          example: 6f0b4665-a915-4c92-aa36-65afb4a2cd71
+                          description: The requestId that was passed.Allows alpha numeric character and special characters like [0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}
+      responses:
+        "200":
+          description: OK
+        "408":
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1007: "
+                      message:
+                        type: string
+                        example: Connection failed due to timeout
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900900"
+                  message:
+                    type: string
+                    example: Unclassified Authentication Failure
+                  description:
+                    type: string
+                    example: >-
+                      Access failure for API: /hiecm/api/v3, version: v3 status: (900900) - Unclassified Authentication Failure
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - code
+                  - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+
+  /api/hiecm/patient-share/v3/profile/getTokenDetails:
+    get:
+      tags:
+        - abdm-hiecm-patient-share-phr
+      operationId: profile-share 3
+      summary: This API will be invoked to get the historical token numbers of the patient
+      description: >-
+        This is a API will be invoked get the historical token numbers of the patient. <ol type='1'> <li> <b>Header</b>  <ol type='a'> <br/> <li>AUTHORIZATION will be provided by the gateway session API after the successful verification of client ID and Secret [ Example: eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJ2YXNhbnRoYWt1bWFyLmtlc2F2 ]</li> <li>REQUEST-ID unique UUID[ Example: 18235d89-cb13-479d-ad71-7a57d5f669a8 ]</li> <li>TIMESTAMP  actual time of the requested was initiated[ Example: 2022-10-06T10:10:00.587Z ]</li> </ol> </li> <br/> </ol>
+      
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: REQUEST-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+          description: Unique UUID for track the end to end request transaction
+        - name: TIMESTAMP
+          in: header
+          required: true
+          schema:
+            type: string
+          example: '2022-10-06T15:10:00.587Z'
+          description: >-
+            Actual time of the request was initiated, ISO 8601 represents date and
+            time by starting with the year, followed by the month, the day, the
+            hour, the minutes, seconds and milliseconds
+        - name:  X-CM-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          example: sbx
+          description: Suffix of the consent manager to which the request was intended
+        - name: X-AUTH-TOKEN
+          in: header
+          required: true
+          description: >-
+            JWT Authentication token which was issued by ABDM after successful validation of username and password
+          schema:
+            type: string
+            format: bearer
+            minimum: 1
+            maximum: 100
+            example: Bearer eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJ2YXNhbnRoYWt1bWFyLmtlc2F2
+        - name: limit
+          in: query
+          required: true
+          schema: 
+            type: string
+          description: The limit of data to be fetched
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          format: int64
+                          nullable: false
+                          example: 1
+                        patientId:
+                          type: string
+                          nullable: false
+                          format: email
+                          example: abdulkalam@abdm
+                        tokenNumber:
+                          type: string
+                          nullable: false
+                          example: 1
+                        hipId:
+                          type: string
+                          nullable: false
+                          example: ABDM_HIP
+                        hipName:
+                          type: string
+                          nullable: false
+                          example: Health Information Provider Name
+                        hipAddress:
+                          type: string
+                          nullable: false
+                          example: sample address
+                        expiresIn:
+                          type: string
+                          nullable: false
+                          example: 1800
+                        clientId:
+                          type: string
+                          nullable: false
+                          example: ABDM
+                        dateCreated:
+                          type: string
+                          format: iso-date-time
+                          nullable: false
+                          example: "2024-09-11T07:31:02.357Z"
+                        counterCode:
+                          type: string
+                          nullable: false
+                          example: Counter 1
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: integer
+                        example: ABDM-1006
+                      message:
+                        type: string
+                        example: Bad Request, invalid request Body
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900901"
+                  message:
+                    type: string
+                    example: Invalid Credentials
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure you have provided the correct security credentials
+        "403":
+          description: Forbidden
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Access Denied
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "408":
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1007: "
+                      message:
+                        type: string
+                        example: Connection failed due to timeout
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1022: "
+                      message:
+                        type: string
+                        example: Too many requests
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900900"
+                  message:
+                    type: string
+                    example: Unclassified Authentication Failure
+                  description:
+                    type: string
+                    example: >-
+                      Access failure for API: /hiecm/api/v3, version: v3 status: (900900) - Unclassified Authentication Failure
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - code
+                  - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable

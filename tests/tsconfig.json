@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "jest"],
+    "lib": ["es2021", "dom"],
+    "rootDir": "..",
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["./**/*", "../src/**/*"],
+  "exclude": ["node_modules", "dist"]
+} 

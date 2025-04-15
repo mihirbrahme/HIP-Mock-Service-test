@@ -1,0 +1,1351 @@
+openapi: 3.0.2
+info:
+  title: HIP Initiated Linking Service
+  version: 1.0.2
+servers:
+- url: https://dev.abdm.gov.in
+  description: Sandbox Server URL
+- url: https://apis.abdm.gov.in
+  description: Production Server URL
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    apikeyAuth:
+      type: http
+      scheme: apikey
+    noauthAuth:
+      type: http
+      scheme: noauth
+    basicAuth:
+      type: http
+      scheme: basic
+
+paths:
+  /api/hiecm/hip/v3/link/carecontext:
+    post:
+      tags:
+      - abdm-hip-initiated-linking-hip
+      operationId: abdm-hip-initiated-linking-hip 1
+      summary: This API will be used to perform HIP initiated linking.
+      description: " <p><b>Note: </b>While generating the link-token the user/patient is providing both abha_number and abha_address, then at the time of linking both must be mandatory. If not one should be mandatory either 'abha_number' or 'abha_address'.</p><br><p> This API endpoint is utilized by the Ayushman Bharat Digital Mission (ABDM) system to store care context or health record references. Upon successful validation of the ABHA (Ayushman Bharat Health Account) address and the associated link token, the system securely records the relevant care context information. This process ensures that health records are accurately linked and accessible, facilitating efficient and seamless health information exchange across the network. The API plays a critical role in maintaining the integrity and continuity of patient health records, thereby supporting comprehensive and coordinated care."
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+      - name: X-HIP-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: IN2810014366
+        description: Identifier of the health information provider to which the request was intended
+      - name: X-LINK-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+          example: eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJ2YXNhbnRoYWt1bWFyLmtlc2F2
+        description: >-
+          JWT Authentication token which was issued by ABDM after successful validation of username and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - abhaAddress
+              - patient
+              properties:
+                abhaNumber:
+                  type: number
+                  nullable: true
+                  example: 12345678901234
+                  description: The abha number of the patient. Should be only 14 digit and it allows numeric character like ^\\d{14}$
+                abhaAddress:
+                  type: string
+                  nullable: false
+                  example: abc@abdm
+                  description: >-
+                    The abha address of the patient. Should start with Alphanumeric . and  _  in the middle and must be ending with @abdm or @sbx also allows alpha numeric character and special characters like ^[a-zA-Z0-9][a-zA-Z0-9_.]+[a-zA-Z0-9]@(abdm|sbx)$
+                patient:
+                  type: array
+                  nullable: false
+                  items:
+                    type: object
+                    required:
+                    - referenceNumber
+                    - display
+                    - careContexts
+                    - hiTypes
+                    - count
+                    properties:
+                      referenceNumber:
+                        type: string
+                        nullable: false
+                        example: TMH-PUID-001
+                        description: >-
+                          Patient identifier with which patient is registered in the facility/hospital or patient can also pass his abha_address in the reference number. Allows alpha numeric character and special characters like ^[a-zA-Z0-9_\-@,. "':|()/]{0,255}$
+                      display:
+                        type: string
+                        nullable: false
+                        example: String
+                        description: The display text for patient reference(regex:^[a-zA-Z0-9_\-@,. "':|()/]{0,255}$)
+                      careContexts:
+                        type: array
+                        nullable: false
+                        items:
+                          type: object
+                          required:
+                          - referenceNumber
+                          - display
+                          properties:
+                            referenceNumber:
+                              type: string
+                              nullable: false
+                              example: TMH-PUID-001
+                              description: >-
+                                An identifier of patient's care context created in HIP. A care context is a group of patient's health data (Not the actual health data) and it should be unique for each care-context.Allows alpha numeric character and special characters like ^[a-zA-Z0-9_\-@,. ()/:\\]{0,255}$
+                            display:
+                              type: string
+                              nullable: false
+                              example: display 1
+                              description: The display text for care context reference(regex:^[a-zA-Z0-9_\-@,. "':|()/]{0,255}$)
+                      hiTypes:
+                        type: string
+                        enum:
+                        - Prescription
+                        - DiagnosticReport
+                        - OPConsultation
+                        - DischargeSummary
+                        - ImmunizationRecord
+                        - HealthDocumentRecord
+                        - WellnessRecord
+                        - Invoice
+                        nullable: false
+                        example: "DiagnosticReport"
+                      count:
+                        type: number
+                        nullable: false
+                        example: 1
+                        description: >-
+                          The count should match with the number of care contexts
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1006: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid request Body
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900902"
+                  message:
+                    type: string
+                    example: Unauthorized
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure your API invocation call has a header: 'Authorization : Bearer ACCESS_TOKEN' or 'Authorization : Basic ACCESS_TOKEN' or 'apikey: API_KEY'
+        "403":
+          description: Forbidden
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Access Denied
+        "404":
+          description: server cannot find the requested resource
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "ABDM-9999: "
+                  message:
+                    type: string
+                    example: Unknown exception
+  <callback_url>/api/v3/link/on_carecontext:
+    post:
+      tags:
+      - abdm-hip-initiated-linking-hip
+      operationId: hip-initiated-linking 2
+      summary: >-
+        This API endpoint is a callback API that will be called by HIE-CM. The response will be received after it is triggered on the HIP side at /api/hiecm/hip/v3/link/carecontext.
+      description: >-
+        This API endpoint serves as a callback for the /api/hiecm/hip/v3/link/carecontext API. It is used to communicate the outcome of the care context linking process. The response will vary based on the success or failure of the linking operation: <br><br/> <ol> <li>If the linking is successful, pass the successful message </li> <li>If the linking is unsuccessful, pass the error message with the error code and message </li> </ol>
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-HIP-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: IN2810014366
+        description: Identifier of the health information provider to which the request was intended
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                required:
+                - abhaAddress
+                - status
+                - response
+                properties:
+                  abhaAddress:
+                    type: string
+                    nullable: false
+                    example: abc@abdm
+                  status:
+                    type: string
+                    enum:
+                    - Successfully Linked care context
+                    - Failed to link care context
+                    - invalid   [invalid request]
+                    nullable: false
+                    example: Successfully Linked care context
+                  response:
+                    type: object
+                    nullable: false
+                    required:
+                    - requestId
+                    properties:
+                      requestId:
+                        type: string
+                        format: uuid
+                        nullable: false
+                        example: 6f0b4665-a915-4c92-aa36-65afb4a2cd71
+                        description: The requestId that was passed
+              - type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: object
+                    nullable: false
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        nullable: false
+                        example: ABDM-1038
+                      message:
+                        type: string
+                        nullable: false
+                        example: ABHA address and Link token mismatch
+                  response:
+                    type: object
+                    nullable: false
+                    required:
+                    - requestId
+                    properties:
+                      requestId:
+                        type: string
+                        format: uuid
+                        nullable: false
+                        example: 6f0b4665-a915-4c92-aa36-65afb4a2cd71
+                        description: The requestId that was passed
+              - type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: object
+                    nullable: false
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        nullable: false
+                        example: ABDM-1037
+                      message:
+                        type: string
+                        nullable: false
+                        example: Counter and Care context count mismatch
+                  response:
+                    type: object
+                    nullable: false
+                    required:
+                    - requestId
+                    properties:
+                      requestId:
+                        type: string
+                        format: uuid
+                        nullable: false
+                        example: 6f0b4665-a915-4c92-aa36-65afb4a2cd71
+                        description: The requestId that was passed
+              - type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: object
+                    nullable: false
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        nullable: false
+                        example: ABDM-1024
+                      message:
+                        type: string
+                        nullable: false
+                        example: Dependent service unavailable
+                  response:
+                    type: object
+                    nullable: false
+                    required:
+                    - requestId
+                    properties:
+                      requestId:
+                        type: string
+                        format: uuid
+                        nullable: false
+                        example: 6f0b4665-a915-4c92-aa36-65afb4a2cd71
+                        description: The requestId that was passed
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1006: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid request Body
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900902"
+                  message:
+                    type: string
+                    example: Unauthorized
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure your API invocation call has a header: 'Authorization : Bearer ACCESS_TOKEN' or 'Authorization : Basic ACCESS_TOKEN' or 'apikey: API_KEY'
+        "403":
+          description: Forbidden
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Access Denied
+        "404":
+          description: server cannot find the requested resource
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "ABDM-9999: "
+                  message:
+                    type: string
+                    example: Unknown exception
+
+  /api/hiecm/hip/v3/link/context/notify:
+    post:
+      tags:
+      - abdm-hip-initiated-linking-hip
+      operationId: abdm-hip-initiated-linking-hip 3
+      summary: >-
+        This API will be used to notify CM about any update on the already linked care context for a patient.
+      description: >-
+        This API endpoint is used to notify the Consent Management (CM) system about any updates HiTypes of the  already linked care context for a patient. By invoking this API, Health Information Providers (HIPs) can inform the CM system of changes or updates to the patient’s care context, ensuring that the most current and accurate health information is maintained. This process is crucial for the integrity and synchronization of patient health records across the network, supporting seamless and efficient health information exchange.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+      - name: X-HIP-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: IN2810014366
+        description: Identifier of the health information provider to which the request was intended
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - notification
+              properties:
+                notification:
+                  type: object
+                  required:
+                  - patient
+                  - careContext
+                  - hiTypes
+                  - hip
+                  - date
+                  properties:
+                    patient:
+                      type: object
+                      required:
+                      - id
+                      properties:
+                        id:
+                          type: string
+                          nullable: false
+                          example: sample@sbx
+                          description: The abha address of the patient
+                    careContext:
+                      type: object
+                      required:
+                      - patientReference
+                      - careContextReference
+                      properties:
+                        patientReference:
+                          type: string
+                          nullable: false
+                          example: sample@sbx
+                          description: >-
+                            "A patient identifier with which patient is registered in the facility/hospital"
+                        careContextReference:
+                          type: string
+                          nullable: false
+                          example: b009a970-8b04-4779-abd1-b50f113245bf
+                          description: >-
+                            An identifier of patient's care context created in HIP. A care context is a group of patient's health data (Not the actual health data)
+                    hiTypes:
+                      type: array
+                      description: Type of health data that created in the care context
+                      items:
+                        type: string
+                        enum:
+                        - Prescription
+                        - DiagnosticReport
+                        - OPConsultation
+                        - DischargeSummary
+                        - ImmunizationRecord
+                        - HealthDocumentRecord
+                        - WellnessRecord
+                        - Invoice
+                        nullable: false
+                        example: "DiagnosticReport"
+                    date:
+                      type: string
+                      format: date-time
+                      nullable: false
+                      example: "2024-05-09T10:34:00.387Z"
+                      description: This should be a UTC Date & Time in ISO format
+                    hip:
+                      type: object
+                      required:
+                      - id
+                      - name
+                      - type
+                      properties:
+                        id:
+                          type: string
+                          nullable: false
+                          example: ABDM_HIP
+                          description: The service ID of the health information provider
+
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1006: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid request Body
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900902"
+                  message:
+                    type: string
+                    example: Unauthorized
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure your API invocation call has a header: 'Authorization : Bearer ACCESS_TOKEN' or 'Authorization : Basic ACCESS_TOKEN' or 'apikey: API_KEY'
+        "403":
+          description: Forbidden
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Access Denied
+        "404":
+          description: server cannot find the requested resource
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "ABDM-9999: "
+                  message:
+                    type: string
+                    example: Unknown exception
+  <callback_url>/api/v3/links/context/on-notify:
+    post:
+      tags:
+      - abdm-hip-initiated-linking-hip
+      operationId: hip-initiated-linking 3
+      summary: >-
+        This API endpoint is a call back API for /api/hiecm/hip/v3/link/context/notify used to notify the HIP.
+      description: >-
+        This API endpoint is a call back API for /api/hiecm/hip/v3/link/context/notify <br><br/> <ol> <li>If the notification to CM is successful, pass the successful message </li> <li>If the notification to CMis unsuccessful, pass the error message with the error code and message </li> </ol>
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-HIP-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: IN2810014366
+        description: Identifier of the health information provider to which the request was intended
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: "In the request body, either ‘acknowledgement’ or ‘error’ must be included.<br> <ol type='a'><br/> <li>Incase of success scenario,acknowledgement is mandatory and error is optional </li> <li>Incase of failure scenario,error is mandatory and acknowledgment is optional</li> <li>response is mandatory object in both the cases</li> </ol>"
+              required:
+              - acknowledgement
+              - response
+              properties:
+                acknowledgement:
+                  type: object
+                  required:
+                  - status
+                  properties:
+                    status:
+                      type: string
+                      nullable: false
+                      enum:
+                      - SUCCESS
+                      - ERRORED
+                      example: SUCCESS
+                error:
+                  type: object
+                  nullable: true
+                  required:
+                  - code
+                  - message
+                  properties:
+                    code:
+                      type: string
+                      nullable: false
+                      example: "ABDM-1006: "
+                    message:
+                      type: string
+                      nullable: false
+                      example: "No links found for the patient in the given HIP"
+                response:
+                  type: object
+                  nullable: false
+                  required:
+                  - requestId
+                  properties:
+                    requestId:
+                      type: string
+                      format: uuid
+                      nullable: false
+                      example: 6f0b4665-a915-4c92-aa36-65afb4a2cd71
+                      description: The requestId that was passed
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1006: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid request Body
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900902"
+                  message:
+                    type: string
+                    example: Unauthorized
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure your API invocation call has a header: 'Authorization : Bearer ACCESS_TOKEN' or 'Authorization : Basic ACCESS_TOKEN' or 'apikey: API_KEY'
+        "403":
+          description: Forbidden
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Access Denied
+        "404":
+          description: server cannot find the requested resource
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "ABDM-9999: "
+                  message:
+                    type: string
+                    example: Unknown exception
+  /api/hiecm/hip/v3/link/patient/links/sms/notify2:
+    post:
+      tags:
+      - abdm-hip-initiated-linking-hip
+      operationId: abdm-hip-initiated-linking-hip 4
+      summary: >-
+        This API will be used by HIP to send SMS notification to patient that a care context is linked.
+      description: >-
+        This API endpoint is utilized by Health Information Providers (HIPs) to send SMS notifications to patients, informing them that a care context has been successfully linked to their ABHA (Ayushman Bharat Health Account) address. By invoking this API, HIPs can ensure that patients are promptly notified about the linkage of their health records, enhancing transparency and patient engagement. This notification process is essential for keeping patients informed and involved in the management of their health information, thereby supporting a more connected and responsive healthcare system.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - notification
+              properties:
+                notification:
+                  type: object
+                  required:
+                  - phoneNo
+                  - hip
+                  properties:
+                    phoneNo:
+                      type: string
+                      nullable: false
+                      example: 986543***
+                      description: The mobile number to send SMS
+                    hip:
+                      type: object
+                      required:
+                      - id
+                      - name
+                      properties:
+                        id:
+                          type: string
+                          nullable: false
+                          example: ABDM_HIP
+                          description: The service ID of the health information provider
+                        name:
+                          type: string
+                          nullable: false
+                          example: ABC Hospital
+                          description: The name of the health information provider
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1006: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid request Body
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900902"
+                  message:
+                    type: string
+                    example: Unauthorized
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure your API invocation call has a header: 'Authorization : Bearer ACCESS_TOKEN' or 'Authorization : Basic ACCESS_TOKEN' or 'apikey: API_KEY'
+        "403":
+          description: Forbidden
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Access Denied
+        "404":
+          description: server cannot find the requested resource
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "ABDM-9999: "
+                  message:
+                    type: string
+                    example: Unknown exception
+
+  <callback_url>/api/v3/patients/sms/on-notify:
+    post:
+      tags:
+      - abdm-hip-initiated-linking-hip
+      operationId: hip-initiated-linking 5
+      summary: >-
+        This API endpoint is a call back API for /api/hiecm/hip/v3/link/patient/links/sms/notify2
+      description: >-
+        This API endpoint is a call back API for /api/hiecm/hip/v3/link/patient/links/sms/notify2 <br><br/> <ol> <li>If the SMS trigger is successful, pass the successful message </li> <li>If the SMS trigger is unsuccessful, pass the error message with the error code and message </li> </ol>
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-HIP-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: IN2810014366
+        description: Identifier of the health information provider to which the request was intended
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: "In the request body, either ‘acknowledgement’ or ‘error’ must be included.<br> <ol type='a'><br/> <li>Incase of success scenario,acknowledgement is mandatory and error is optional </li> <li>Incase of failure scenario,error is mandatory and acknowledgment is optional</li> <li>response is mandatory object in both the cases</li> </ol>"
+              required:
+              - acknowledgement
+              - response
+              properties:
+                acknowledgement:
+                  type: object
+                  required:
+                  - status
+                  properties:
+                    status:
+                      type: string
+                      nullable: false
+                      enum:
+                      - SUCCESS
+                      - ERRORED
+                      example: SUCCESS
+                error:
+                  type: object
+                  nullable: true
+                  required:
+                  - code
+                  - message
+                  properties:
+                    code:
+                      type: string
+                      nullable: false
+                      example: ABDM-1024
+                    message:
+                      type: string
+                      nullable: false
+                      example: Dependent service unavailable
+                response:
+                  type: object
+                  nullable: false
+                  required:
+                  - requestId
+                  properties:
+                    requestId:
+                      type: string
+                      format: uuid
+                      nullable: false
+                      example: 6f0b4665-a915-4c92-aa36-65afb4a2cd71
+                      description: The requestId that was passed
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1006: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid request Body
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900902"
+                  message:
+                    type: string
+                    example: Unauthorized
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure your API invocation call has a header: 'Authorization : Bearer ACCESS_TOKEN' or 'Authorization : Basic ACCESS_TOKEN' or 'apikey: API_KEY'
+        "403":
+          description: Forbidden
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Access Denied
+        "404":
+          description: server cannot find the requested resource
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "ABDM-9999: "
+                  message:
+                    type: string
+                    example: Unknown exception
+  /api/hiecm/hip/v3/link/patient/links:
+    get:
+      tags:
+      - abdm-hip-initiated-linking-phr
+      operationId: abdm-hip-initiated-linking-hip 2
+      summary: >-
+        This API will be used to fetch all linked care contexts from all HIPs for a patient.
+      description: >-
+        This API endpoint is designed to retrieve all linked care contexts for a patient from various Health Information Providers (HIPs). By invoking this API, users can obtain a comprehensive list of care contexts associated with a patient’s ABHA (Ayushman Bharat Health Account) address. This functionality is essential for ensuring that all relevant health records are accessible and consolidated, thereby supporting coordinated and efficient patient care. The API facilitates seamless health information exchange, enhancing the overall quality and continuity of care within the healthcare ecosystem.
+
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+      - name: X-AUTH-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT Authentication token which was issued by ABDM after successful validation of username and password
+      - name: limit
+        in: query
+        required: true
+        schema:
+          type: integer
+        description: Limit the number of records returned. Send -1 to get all the links of the patient.
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Patient:
+                    type: object
+                    required:
+                    - id
+                    - links
+                    - referenceNumber
+                    - display
+                    - hiTypes
+                    - careContexts
+                    properties:
+                      id:
+                        type: string
+                        example: "abc@abdm"
+                      links:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            hip:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  example: "ABDM_HIP"
+                                name:
+                                  type: string
+                                  example: "ABC Hospital"
+                                type:
+                                  type: string
+                                  example: "HIP"
+                            referenceNumber:
+                              type: string
+                              example: "string"
+                            display:
+                              type: string
+                              example: "string"
+                            hiType:
+                              type: string
+                              enum:
+                              - Prescription
+                              - DiagnosticReport
+                              - OPConsultation
+                              - DischargeSummary
+                              - ImmunizationRecord
+                              - HealthDocumentRecord
+                              - WellnessRecord
+                              - Invoice
+                              nullable: false
+                              example: "DiagnosticReport"
+                            careContexts:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  referenceNumber:
+                                    type: string
+                                    example: "TMH-PUID-001"
+                                  display:
+                                    type: string
+                                    example: "display 1"
+                            dateCreated:
+                              type: string
+                              format: date-time
+                              example: "2024-05-09T10:34:00.387Z"
+
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1065: "
+                      message:
+                        type: string
+                        example: Invalid X Auth token
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900902"
+                  message:
+                    type: string
+                    example: Unauthorized
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure your API invocation call has a header: 'Authorization : Bearer ACCESS_TOKEN' or 'Authorization : Basic ACCESS_TOKEN' or 'apikey: API_KEY'
+        "403":
+          description: Forbidden
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Access Denied
+        "404":
+          description: server cannot find the requested resource
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "ABDM-9999: "
+                  message:
+                    type: string
+                    example: Unknown exception

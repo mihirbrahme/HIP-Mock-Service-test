@@ -1,0 +1,1809 @@
+openapi: 3.0.2
+info:
+  title: Gateway
+  version: "1.0"
+servers:
+- url: https://dev.abdm.gov.in
+  description: Sandbox Server URL
+- url: https://apis.abdm.gov.in
+  description: Production Server URL
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    apikeyAuth:
+      type: http
+      scheme: apikey
+    noauthAuth:
+      type: http
+      scheme: noauth
+    basicAuth:
+      type: http
+      scheme: basic
+
+paths:
+  /api/hiecm/gateway/v3/bridge-services:
+    get:
+      tags:
+      - abdm-gateway
+      operationId: abdm-gateway1
+      summary: This API will fetch the service ids registered against a bridge.
+      description: >-
+        This API is designed to retrieve the unique identifiers, known as service IDs, that are associated with a specific bridge. In this context, a bridge acts as an intermediary component that connects various services or networks, enabling them to communicate with each other. When you call this API, it queries the bridge to gather a list of all the service IDs that have been registered with it.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bridge:
+                    type: object
+                    nullable: false
+                    properties:
+                      id:
+                        type: string
+                        nullable: false
+                        example: Bridge_ABC
+                      name:
+                        type: string
+                        nullable: false
+                        example: ABC Bridge
+                      url:
+                        type: string
+                        format: uri
+                        nullable: false
+                        example: https://abc.def.in
+                      active:
+                        type: boolean
+                        nullable: false
+                        example: true
+                      blocklisted:
+                        type: boolean
+                        nullable: false
+                        example: false
+                  services:
+                    type: array
+                    nullable: false
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          nullable: false
+                          example: ABC_Service
+                        name:
+                          type: string
+                          nullable: false
+                          example: Service ABC
+                        types:
+                          type: array
+                          nullable: false
+                          items:
+                            type: string
+                            enum:
+                            - HIP
+                            - HIU
+                            - HEALTH_LOCKER
+                            - PHR
+                            example: HIP
+                        endpoints:
+                          type: object
+                          nullable: true
+                          properties:
+                            hipEndpoints:
+                              type: array
+                              nullable: false
+                              items:
+                                type: object
+                                properties:
+                                  use:
+                                    type: string
+                                    nullable: false
+                                    example: registration
+                                  connectionType:
+                                    type: string
+                                    nullable: false
+                                    example: HTTPS
+                                  address:
+                                    type: string
+                                    format: uri
+                                    nullable: false
+                                    example: https://abc.com/register
+                            hiuEndpoints:
+                              type: array
+                              nullable: false
+                              items:
+                                type: object
+                                properties:
+                                  use:
+                                    type: string
+                                    nullable: false
+                                    example: registration
+                                  connectionType:
+                                    type: string
+                                    nullable: false
+                                    example: HTTPS
+                                  address:
+                                    type: string
+                                    format: uri
+                                    nullable: false
+                                    example: https://abc.com/register
+                            healthLockerEndpoints:
+                              type: array
+                              nullable: false
+                              items:
+                                type: object
+                                properties:
+                                  use:
+                                    type: string
+                                    nullable: false
+                                    example: registration
+                                  connectionType:
+                                    type: string
+                                    nullable: false
+                                    example: HTTPS
+                                  address:
+                                    type: string
+                                    format: uri
+                                    nullable: false
+                                    example: https://abc.com/register
+                        active:
+                          type: boolean
+                          nullable: false
+                          example: true
+        "204":
+          description: No Content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: integer
+                        example: "ABDM-1015: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid response
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900901"
+                  message:
+                    type: string
+                    example: Invalid Credentials
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure you have provided the correct security credentials
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-9999: "
+                      message:
+                        type: string
+                        example: Unknown exception
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  /api/hiecm/gateway/v3/bridge-service/serviceId/{service-id}:
+    get:
+      tags:
+      - abdm-gateway
+      operationId: abdm-gateway2
+      summary: This API is invoked to fetch the details of a service id.
+      description: >-
+        This API is designed to retrieve the details associated with a specific service ID. When invoked, it queries the system to fetch comprehensive information about the service identified by the provided service ID.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+      - name: service-id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The service id
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+                    nullable: false
+                    example: 4
+                  bridgeId:
+                    type: string
+                    nullable: false
+                    example: ABC_Bridge
+                  serviceId:
+                    type: string
+                    nullable: false
+                    example: ABC_Service
+                  name:
+                    type: string
+                    nullable: false
+                    example: Service ABC
+                  isHip:
+                    type: boolean
+                    nullable: false
+                    example: true
+                  isHiu:
+                    type: boolean
+                    nullable: false
+                    example: true
+                  isHealthLocker:
+                    type: boolean
+                    nullable: false
+                    example: true
+                  isPhr:
+                    type: boolean
+                    nullable: false
+                    example: true
+                  active:
+                    type: boolean
+                    nullable: false
+                    example: true
+                  registerTime:
+                    type: string
+                    format: date time
+                    nullable: true
+                    example: "2022-10-06T10:10:00.587Z"
+                  dateCreated:
+                    type: string
+                    format: date time
+                    nullable: true
+                    example: "2022-10-06T10:10:00.587Z"
+                  dateModified:
+                    type: string
+                    format: date time
+                    nullable: true
+                    example: "2022-10-06T10:10:00.587Z"
+        "204":
+          description: No Content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: integer
+                        example: "ABDM-1015: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid response
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900901"
+                  message:
+                    type: string
+                    example: Invalid Credentials
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure you have provided the correct security credentials
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-9999: "
+                      message:
+                        type: string
+                        example: Unknown exception
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  /api/hiecm/gateway/v3/bridge/url:
+    patch:
+      tags:
+      - abdm-gateway
+      operationId: abdm-gateway3
+      summary: This API is invoked to update the bridge URL.
+      description: >-
+        This API is designed to update the URL of a bridge. When invoked, it allows users to modify the existing URL associated with a specific bridge. This functionality is crucial for maintaining accurate and up-to-date connection information within the network. By using this API, administrators can ensure that the bridge URL reflects the current configuration and routing requirements, facilitating seamless communication and integration between different services in the form of webhook site.
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  nullable: false
+                  example: https://webhook.site/
+                  description: The bridge URL to be updated
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+      responses:
+        "202":
+          description: Accepted
+        "204":
+          description: No Content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: integer
+                        example: "ABDM-1015: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid response
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900901"
+                  message:
+                    type: string
+                    example: Invalid Credentials
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure you have provided the correct security credentials
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-9999: "
+                      message:
+                        type: string
+                        example: Unknown exception
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  /api/hiecm/gateway/v3/providers:
+    get:
+      tags:
+      - abdm-gateway
+      operationId: abdm-gateway4
+      summary: This API is invoked to fetch the list of providers filtered by name.
+      description: >-
+        This API is designed to retrieve a list of providers, filtered by their names. When invoked, it queries the system to fetch providers that match the specified name criteria. This functionality is particularly useful for narrowing down provider options based on specific naming conventions or patterns. By using this API, users can efficiently locate and manage providers within the network, ensuring they have access to the relevant provider information needed for various operational tasks.
+
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+      - name: name
+        in: query
+        required: false
+        schema:
+          type: string
+        example: ABC Hospital
+        description: Name of the provider
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    identifier:
+                      type: object
+                      nullable: false
+                      required:
+                      - name
+                      - id
+                      properties:
+                        name:
+                          type: string
+                          nullable: false
+                          example: AB - PMJAY
+                        id:
+                          type: string
+                          nullable: false
+                          example: PMJAY
+                    facilityType:
+                      type: array
+                      nullable: false
+                      items:
+                        type: string
+                        enum:
+                        - HIP
+                        - HIU
+                        - HEALTH_LOCKER
+                        example: HIP
+                    isHip:
+                      type: boolean
+                      nullable: false
+                      example: true
+                    isHiu:
+                      type: boolean
+                      nullable: false
+                      example: false
+                    isHealthLocker:
+                      type: boolean
+                      nullable: false
+                      example: true
+                    isPhr:
+                      type: boolean
+                      nullable: false
+                      example: true
+                    isGovtEntity:
+                      type: boolean
+                      nullable: true
+                      example: false
+                    endpoints:
+                      type: object
+                      properties:
+                        healthLockerEndpoints:
+                          type: array
+                          nullable: false
+                          items:
+                            type: object
+                            required:
+                            - use
+                            - id
+                            properties:
+                              use:
+                                type: string
+                                nullable: false
+                                example: registration
+                              connectionType:
+                                type: string
+                                nullable: false
+                                example: HTTPS
+                              address:
+                                type: string
+                                format: uri
+                                nullable: false
+                                example: https://abc.com/register
+        "204":
+          description: No Content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: integer
+                        example: "ABDM-1015: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid response
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900901"
+                  message:
+                    type: string
+                    example: Invalid Credentials
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure you have provided the correct security credentials
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-9999: "
+                      message:
+                        type: string
+                        example: Unknown exception
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  /api/hiecm/gateway/v3/providers/{provider-id}:
+    get:
+      tags:
+      - abdm-gateway
+      operationId: abdm-gateway5
+      summary: >-
+        This API is invoked to fetch the record for provider details for requested provider id.
+      description: >-
+        This API is designed to retrieve the details of a specific provider based on the provided provider ID. When invoked, it queries the system to fetch comprehensive information about the provider identified by the given ID.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+      - name: provider-id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The provider id
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  identifier:
+                    type: object
+                    nullable: false
+                    required:
+                    - name
+                    - id
+                    properties:
+                      name:
+                        type: string
+                        nullable: false
+                        example: AB - PMJAY
+                      id:
+                        type: string
+                        nullable: false
+                        example: PMJAY
+                  facilityType:
+                    type: array
+                    nullable: false
+                    items:
+                      type: string
+                      enum:
+                      - HIP
+                      - HIU
+                      - HEALTH_LOCKER
+                      example: HIP
+                  isHip:
+                    type: boolean
+                    nullable: false
+                    example: true
+
+        "204":
+          description: No Content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: integer
+                        example: "ABDM-1015: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid response
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900901"
+                  message:
+                    type: string
+                    example: Invalid Credentials
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure you have provided the correct security credentials
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-9999: "
+                      message:
+                        type: string
+                        example: Unknown exception
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  /api/hiecm/gateway/v3/govt-programs:
+    get:
+      tags:
+      - abdm-gateway
+      operationId: abdm-gateway6
+      summary: This API is invoked to fetch the list of govt programs.
+      description: >-
+        This API is designed to retrieve a list of government programs. When invoked, it queries the system to fetch comprehensive information about various government programs available. This functionality is particularly useful for users who need to access detailed information about different programs.<br></br> <b>Note:</b><p>This api will retrive the list of govt-programs in the form of list.</p>
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    identifier:
+                      type: object
+                      nullable: false
+                      required:
+                      - name
+                      - id
+                      properties:
+                        name:
+                          type: string
+                          nullable: false
+                          example: AB - PMJAY
+                        id:
+                          type: string
+                          nullable: false
+                          example: PMJAY
+                    facilityType:
+                      type: array
+                      nullable: false
+                      items:
+                        type: string
+                        enum:
+                        - HIP
+                        - HIU
+                        - HEALTH_LOCKER
+                        example: HIP
+                    isHip:
+                      type: boolean
+                      nullable: false
+                      example: true
+
+        "204":
+          description: No Content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: integer
+                        example: "ABDM-1015: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid response
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900901"
+                  message:
+                    type: string
+                    example: Invalid Credentials
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure you have provided the correct security credentials
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-9999: "
+                      message:
+                        type: string
+                        example: Unknown exception
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  /api/hiecm/gateway/v3/health-lockers:
+    get:
+      tags:
+      - abdm-gateway
+      operationId: abdm-gateway7
+      summary: >-
+        This API is invoked to fetch the record with health locker enabled provider details.
+      description: >-
+        This API is designed to retrieve records of providers that have health locker functionality enabled. When invoked, it queries the system to fetch detailed information about these specific providers. This functionality is particularly useful for users who need to identify and manage providers offering health locker services, which may include secure storage of health records, easy access to medical information, and other related features. By using this API, users can efficiently gather and manage data about health locker-enabled providers, ensuring they have access to all necessary details for effective service utilization and operational management.
+
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+      - name: name
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Name of the Locker
+        example: ABC locker
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    identifier:
+                      type: object
+                      nullable: false
+                      required:
+                      - name
+                      - id
+                      properties:
+                        name:
+                          type: string
+                          nullable: false
+                          example: AB - PMJAY
+                        id:
+                          type: string
+                          nullable: false
+                          example: PMJAY
+                    facilityType:
+                      type: array
+                      nullable: false
+                      items:
+                        type: string
+                        enum:
+                        - HIP
+                        - HIU
+                        - HEALTH_LOCKER
+                        example: HIP
+                    isHip:
+                      type: boolean
+                      nullable: false
+                      example: true
+                    isGovtEntity:
+                      type: boolean
+                      nullable: true
+                      example: false
+                    endpoints:
+                      type: object
+                      properties:
+                        healthLockerEndpoints:
+                          type: array
+                          nullable: false
+                          items:
+                            type: object
+                            required:
+                            - use
+                            - id
+                            properties:
+                              use:
+                                type: string
+                                nullable: false
+                                example: registration
+                              connectionType:
+                                type: string
+                                nullable: false
+                                example: HTTPS
+                              address:
+                                type: string
+                                format: uri
+                                nullable: false
+                                example: https://abc.com/register
+        "204":
+          description: No Content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: integer
+                        example: "ABDM-1015: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid response
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "900901"
+                  message:
+                    type: string
+                    example: Invalid Credentials
+                  description:
+                    type: string
+                    example: >-
+                      Invalid Credentials. Make sure you have provided the correct security credentials
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-9999: "
+                      message:
+                        type: string
+                        example: Unknown exception
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  /api/hiecm/gateway/v3/sessions:
+    post:
+      tags:
+      - abdm-sessions
+      operationId: abdm-sessions 1
+      summary: This API is invoked to generate keycloak token/access token.
+      description: >-
+        This API is used to generate a access token. When invoked, it facilitates the authentication process by providing a secure token that can be used to access various services and resources within the system. This functionality is essential for ensuring secure and authorized access, enabling users to interact with protected endpoints and perform operations that require authentication. By using this API, users can obtain the necessary tokens to maintain secure sessions and access the system’s features effectively.
+
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - clientId
+              - clientSecret
+              - grantType
+              properties:
+                clientId:
+                  type: string
+                  nullable: false
+                  description: Mandatory when the clientId.
+                  example: SBX_0000
+                clientSecret:
+                  type: string
+                  nullable: false
+                  description: Mandatory when the clientSecret.
+                  example: 0******-***-***-***-a****
+                grantType:
+                  type: string
+                  nullable: false
+                  example: client_credentials
+
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    format: bearer
+                    nullable: false
+                    example: >-
+                      eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJ2YXNhbnRoYWt1bWFyLmtlc2F2YW5Ac2J4IiwiY2xpZW50SWQiOiJzYngiLCJzeXN0ZW0iOiJBQkhBLUEiLCJyZXF1ZXN0ZXJJZCI6IlBIUi1XRUIiLCJwaHJNb2JpbGUiOm51bGwsImV4cCI6MTY2NzI5ODExNSwiaWF0IjoxNjY3MjkwOTE1LCJwaHJBZGRyZXNzIjoidmFzYW50aGFrdW1hci5rZXNhdmFuQHNieCIsInR4bklkIjoiYjEwMGM4ZDMtNTE1ZC00YWFiLTg1OWQtYzNlMTUwOTE3ZGY1In0.YXw7gzMY-U5Yg41xZdkWr6v0ly2LJL9qMKBsaydlzq7lP7Yd-BIshwWdUAJQInUG2MRoAzSzCKfSLCL9XHMkFgxXE1hTsaHzr_LjXJ--Sj48ftSTrPt5EfVbGVN6ZGv0pY8N1DlUopo7SDzolKjuLaVviLY8OUhX5COQfHtMyJce2oKtmmrl24N_fdEuHVq_4diJ_ZBKRxkpjYYT8myqelMqJbXJW50r6wyPkvBExM0MLz0g2vAZM1g7JqD9e7yWizH7OFtqLsUUC0ksTVwhxEFnki32GpkxEEuJqbB6t9BJXlZeQGX4K0WfCZA6dWtEZcY8HJE4EIQeCfRH5VCjyA
+                  expiresIn:
+                    type: integer
+                    nullable: false
+                    example: 1200
+                  refreshExpiresIn:
+                    type: integer
+                    nullable: false
+                    example: 1800
+                  refreshToken:
+                    type: string
+                    format: bearer
+                    nullable: false
+                    example: >-
+                      eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJ2YXNhbnRoYWt1bWFyLmtlc2F2YW5Ac2J4IiwiY2xpZW50SWQiOiJzYngiLCJzeXN0ZW0iOiJBQkhBLUEiLCJyZXF1ZXN0ZXJJZCI6IlBIUi1XRUIiLCJwaHJNb2JpbGUiOm51bGwsImV4cCI6MTY2NzI5ODExNSwiaWF0IjoxNjY3MjkwOTE1LCJwaHJBZGRyZXNzIjoidmFzYW50aGFrdW1hci5rZXNhdmFuQHNieCIsInR4bklkIjoiYjEwMGM4ZDMtNTE1ZC00YWFiLTg1OWQtYzNlMTUwOTE3ZGY1In0.YXw7gzMY-U5Yg41xZdkWr6v0ly2LJL9qMKBsaydlzq7lP7Yd-BIshwWdUAJQInUG2MRoAzSzCKfSLCL9XHMkFgxXE1hTsaHzr_LjXJ--Sj48ftSTrPt5EfVbGVN6ZGv0pY8N1DlUopo7SDzolKjuLaVviLY8OUhX5COQfHtMyJce2oKtmmrl24N_fdEuHVq_4diJ_ZBKRxkpjYYT8myqelMqJbXJW50r6wyPkvBExM0MLz0g2vAZM1g7JqD9e7yWizH7OFtqLsUUC0ksTVwhxEFnki32GpkxEEuJqbB6t9BJXlZeQGX4K0WfCZA6dWtEZcY8HJE4EIQeCfRH5VCjyA
+                  tokenType:
+                    type: string
+                    nullable: false
+                    example: bearer
+        "204":
+          description: No Content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: integer
+                        example: "ABDM-1015: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid response
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-9999: "
+                      message:
+                        type: string
+                        example: Unknown exception
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  /api/hiecm/gateway/v3/.well-known/openid-configuration:
+    get:
+      tags:
+      - abdm-sessions
+      operationId: abdm-sessions 2
+      summary: This API is invoked to get the open id configuration.
+      description: >-
+        This API is used to retrieve the OpenID configuration. When invoked, it will fetch the certs api for the version.
+
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - url
+                properties:
+                  jwks_uri:
+                    type: string
+                    format: uri
+                    nullable: false
+                    example: https://dev.abdm.gov.in/api/hiecm/gateway/v3/certs
+        "204":
+          description: No Content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: integer
+                        example: "ABDM-1015: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid response
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-9999: "
+                      message:
+                        type: string
+                        example: Unknown exception
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable
+  /api/hiecm/gateway/v3/certs:
+    get:
+      tags:
+      - abdm-sessions
+      operationId: abdm-sessions 3
+      summary: This API is invoked to get the certificate information.
+      description: >-
+        This API is used to retrieve certificate information. When invoked, it provides details about the certificates used within the system. These certificates are crucial for ensuring secure communication and authentication between different components of the system. By using this API, users can access the necessary certificate information required for validating secure connections and maintaining the integrity of data exchanges.
+
+      parameters:
+      - name: REQUEST-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '18235d89-cb13-479d-ad71-7a57d5f669a8'
+        description: Unique UUID for track the end to end request transaction
+      - name: TIMESTAMP
+        in: header
+        required: true
+        schema:
+          type: string
+        example: '2022-10-06T15:10:00.587Z'
+        description: >-
+          Actual time of the request was initiated, ISO 8601 represents date and time by starting with the year, followed by the month, the day, the hour, the minutes, seconds and milliseconds
+      - name: X-CM-ID
+        in: header
+        required: true
+        schema:
+          type: string
+        example: sbx
+        description: Suffix of the consent manager to which the request was intended
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - keys
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        e:
+                          type: string
+                          nullable: false
+                          example: AQAB
+                        kid:
+                          type: string
+                          nullable: false
+                          example: AlRb5WCm8Tm9EJ_IfO9z06j9oCv51pKK
+                        kty:
+                          type: string
+                          nullable: false
+                          example: RSA
+                        "n":
+                          type: string
+                          nullable: false
+                          example: >-
+                            mgmW7W5ZGF_G5cJevwYi8HiPcI-6qS_psnZxa4v3bkwAkyOoOd8-6ketrOI-ZA2PbRbGnxFfZHiI94rdFXJ4Q9ampscsz9NocTIPMPmWydJ8A50pZaYWyikYDSJiDltq7i3WspPKSOuQHr
+                        use:
+                          type: string
+                          nullable: false
+                          example: sig
+                        x5c:
+                          type: array
+                          items:
+                            type: string
+                            nullable: false
+                            example: >-
+                              MIICrzCCAZcCBgFy/3WZBjANBgkqhkiG9w0BAQsFADAbMRkwFwYDVQQDDBBjZW50cmFsLXJlZ2lzdHJ5MB4XDTIwMDYyOTA5NDEzNloXDTMwMDYyOTA5NDMxNlowGzEZMBcGA1UEAwwQY2VudHJhbC1yZWdpc3RyeTCCASIwDQYJK
+                        x5t:
+                          type: string
+                          nullable: false
+                          example: EaMhYGUIvMkp8tvS
+                        x5t2:
+                          type: string
+                          nullable: false
+                          example: vGer6Pt8AhZn8RlbHhAFksOCcGf3u1UWU7Qq
+                        alg:
+                          type: string
+                          nullable: false
+                          example: RS256
+        "204":
+          description: No Content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-1001: "
+                      message:
+                        type: string
+                        example: No data found
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: integer
+                        example: "ABDM-1015: "
+                      message:
+                        type: string
+                        example: Bad Request, invalid response
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required:
+                    - code
+                    - message
+                    properties:
+                      code:
+                        type: string
+                        example: "ABDM-9999: "
+                      message:
+                        type: string
+                        example: Unknown exception
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                    nullable: false
+                    example: ABDM-1024
+                  message:
+                    type: string
+                    nullable: false
+                    example: Dependent service unavailable

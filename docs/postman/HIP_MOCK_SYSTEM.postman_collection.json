@@ -1,0 +1,325 @@
+{
+  "info": {
+    "_postman_id": "1234567-89ab-cdef-0123-456789abcdef",
+    "name": "HIP Mock System",
+    "description": "Complete collection for testing HIP Mock System APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Generate Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/token",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "token"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"test_client\",\n  \"clientSecret\": \"test_secret\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set('token', jsonData.accessToken);",
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Token is present', function() {",
+                  "    pm.expect(jsonData.accessToken).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/token/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "token", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Patient Management",
+      "item": [
+        {
+          "name": "Register Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/patient/register",
+              "host": ["{{base_url}}"],
+              "path": ["patient", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"abhaNumber\": \"1234-5678-9012\",\n  \"name\": \"John Doe\",\n  \"gender\": \"M\",\n  \"dateOfBirth\": \"1990-01-01\",\n  \"address\": {\n    \"line\": \"123 Main St\",\n    \"district\": \"Test District\",\n    \"state\": \"Test State\",\n    \"pincode\": \"123456\"\n  },\n  \"identifiers\": [\n    {\n      \"type\": \"MOBILE\",\n      \"value\": \"9876543210\"\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Search Patient",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/patient/search?abhaNumber=1234-5678-9012",
+              "host": ["{{base_url}}"],
+              "path": ["patient", "search"],
+              "query": [
+                {
+                  "key": "abhaNumber",
+                  "value": "1234-5678-9012"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Care Context",
+      "item": [
+        {
+          "name": "Add Care Context",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/care-context/add",
+              "host": ["{{base_url}}"],
+              "path": ["care-context", "add"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"careContexts\": [\n    {\n      \"reference\": \"CC-001\",\n      \"display\": \"General Checkup\",\n      \"type\": \"OPD\",\n      \"metadata\": {\n        \"department\": \"General Medicine\"\n      }\n    }\n  ]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consent Management",
+      "item": [
+        {
+          "name": "Create Consent Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/consent/request",
+              "host": ["{{base_url}}"],
+              "path": ["consent", "request"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"purpose\": {\n    \"code\": \"CAREMGT\",\n    \"text\": \"Care Management\"\n  },\n  \"hiTypes\": [\"OPConsultation\", \"DiagnosticReport\"],\n  \"permission\": {\n    \"dateRange\": {\n      \"from\": \"2023-01-01T00:00:00Z\",\n      \"to\": \"2024-01-01T00:00:00Z\"\n    },\n    \"dataEraseAt\": \"2024-12-31T23:59:59Z\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Consent Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/consent/notification",
+              "host": ["{{base_url}}"],
+              "path": ["consent", "notification"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consentRequestId\": \"{{consentRequestId}}\",\n  \"status\": \"GRANTED\",\n  \"consentArtefact\": {\n    \"id\": \"ca-123\",\n    \"signature\": \"test-signature\",\n    \"details\": {}\n  }\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Records",
+      "item": [
+        {
+          "name": "Store Health Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-records/store",
+              "host": ["{{base_url}}"],
+              "path": ["health-records", "store"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"careContextId\": \"{{careContextId}}\",\n  \"recordType\": \"OPConsultation\",\n  \"data\": {\n    \"resourceType\": \"Encounter\",\n    \"content\": {\n      \"status\": \"finished\",\n      \"class\": \"ambulatory\",\n      \"type\": [{\n        \"text\": \"General Checkup\"\n      }]\n    }\n  },\n  \"attachments\": [{\n    \"contentType\": \"application/pdf\",\n    \"data\": \"base64_encoded_data\",\n    \"hash\": \"sha256_hash\"\n  }]\n}"
+            }
+          }
+        },
+        {
+          "name": "Retrieve Health Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-records/fetch",
+              "host": ["{{base_url}}"],
+              "path": ["health-records", "fetch"],
+              "query": [
+                {
+                  "key": "consentArtefactId",
+                  "value": "{{consentArtefactId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Scenarios",
+      "item": [
+        {
+          "name": "Invalid Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid_token"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/patient/search",
+              "host": ["{{base_url}}"],
+              "path": ["patient", "search"]
+            }
+          }
+        },
+        {
+          "name": "Invalid ABHA Number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/patient/register",
+              "host": ["{{base_url}}"],
+              "path": ["patient", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"abhaNumber\": \"invalid\",\n  \"name\": \"Test Patient\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+} 
