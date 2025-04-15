@@ -12,47 +12,44 @@ import {
 import { Patient } from './Patient.entity';
 import { CareContext } from './CareContext.entity';
 import { HealthRecordAccess } from './HealthRecordAccess.entity';
-import { HealthRecordType } from './enums/HealthRecordType';
-import { RecordStatus } from './enums/RecordStatus';
+import { HealthRecordType } from '../../../services/health-record/types/HealthRecordType';
+
+export enum RecordStatus {
+    ACTIVE = 'ACTIVE',
+    ARCHIVED = 'ARCHIVED',
+    DELETED = 'DELETED'
+}
 
 @Entity('health_records')
 export class HealthRecord {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @ManyToOne(() => Patient, patient => patient.healthRecords)
-    @JoinColumn({ name: 'patient_id' })
-    patient: Patient;
-
-    @Column({ name: 'patient_id' })
+    @Column('uuid')
     patientId: string;
 
-    @ManyToOne(() => CareContext, careContext => careContext.healthRecords)
-    @JoinColumn({ name: 'care_context_id' })
-    careContext: CareContext;
+    @ManyToOne(() => Patient)
+    @JoinColumn({ name: 'patientId' })
+    patient: Patient;
 
-    @Column({ name: 'care_context_id' })
+    @Column('uuid')
     careContextId: string;
+
+    @ManyToOne(() => CareContext)
+    @JoinColumn({ name: 'careContextId' })
+    careContext: CareContext;
 
     @Column({
         type: 'enum',
-        enum: HealthRecordType,
-        name: 'record_type'
+        enum: HealthRecordType
     })
     recordType: HealthRecordType;
 
-    @Column({ type: 'jsonb' })
-    data: Record<string, any>;
+    @Column('jsonb')
+    data: Record<string, unknown>;
 
-    @Column({ type: 'jsonb', nullable: true })
-    metadata: {
-        source?: string;
-        facility?: string;
-        department?: string;
-        practitioner?: string;
-        deviceId?: string;
-        tags?: string[];
-    };
+    @Column('jsonb', { nullable: true })
+    metadata: Record<string, unknown>;
 
     @Column({
         type: 'enum',
@@ -61,22 +58,26 @@ export class HealthRecord {
     })
     status: RecordStatus;
 
-    @VersionColumn()
-    version: number;
+    @Column('text', { nullable: true })
+    version: string;
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
+
+    @Column('timestamp', { nullable: true })
+    deletedAt: Date | null;
 
     @OneToMany(() => HealthRecordAccess, access => access.healthRecord)
     accessLogs: HealthRecordAccess[];
 
-    @CreateDateColumn({ name: 'created_at' })
-    createdAt: Date;
-
-    @UpdateDateColumn({ name: 'updated_at' })
-    updatedAt: Date;
-
     /**
-     * Checks if the record is accessible
+     * Checks if the record is currently active
+     * @returns true if the record is active, false otherwise
      */
-    isAccessible(): boolean {
+    isActive(): boolean {
         return this.status === RecordStatus.ACTIVE;
     }
 
@@ -85,6 +86,7 @@ export class HealthRecord {
      */
     archive(): void {
         this.status = RecordStatus.ARCHIVED;
+        this.updatedAt = new Date();
     }
 
     /**
@@ -92,5 +94,18 @@ export class HealthRecord {
      */
     softDelete(): void {
         this.status = RecordStatus.DELETED;
+        this.deletedAt = new Date();
+        this.updatedAt = new Date();
+    }
+
+    /**
+     * Updates the record data
+     * @param newData The new data to update
+     * @param newVersion The new version identifier
+     */
+    updateData(newData: Record<string, unknown>, newVersion: string): void {
+        this.data = newData;
+        this.version = newVersion;
+        this.updatedAt = new Date();
     }
 } 

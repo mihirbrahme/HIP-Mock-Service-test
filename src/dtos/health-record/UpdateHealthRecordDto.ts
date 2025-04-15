@@ -23,21 +23,7 @@ export class UpdateHealthRecordMetadataDto {
     tags?: string[];
 }
 
-export class UpdateHealthRecordDto {
-    @IsOptional()
-    @IsEnum(HealthRecordType)
-    recordType?: HealthRecordType;
-
-    @IsOptional()
-    @IsObject()
-    data?: Record<string, any>;
-
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => UpdateHealthRecordMetadataDto)
-    metadata?: UpdateHealthRecordMetadataDto;
-
-    @IsOptional()
-    @IsEnum(RecordStatus)
-    status?: RecordStatus;
+export interface UpdateHealthRecordDto {
+    data: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
 } 

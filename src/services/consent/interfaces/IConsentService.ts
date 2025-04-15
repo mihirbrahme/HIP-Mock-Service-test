@@ -4,8 +4,22 @@ import { CreateConsentRequestDto } from '../../../dtos/consent/CreateConsentRequ
 import { UpdateConsentRequestDto } from '../../../dtos/consent/UpdateConsentRequestDto';
 import { CreateConsentArtefactDto, ConsentArtefactSummaryDto } from '../../../dtos/consent/ConsentArtefactDto';
 import { ConsentStatus } from '../../../infrastructure/database/entities/enums/ConsentStatus';
+import { HealthRecordType } from '../../infrastructure/database/entities/HealthRecord.entity';
 
 export interface IConsentService {
+    /**
+     * Validates if there is a valid consent for accessing health records
+     * @param patientId The patient ID
+     * @param careContextId The care context ID
+     * @param recordType The type of health record
+     * @returns true if valid consent exists, false otherwise
+     */
+    validateConsent(
+        patientId: string,
+        careContextId: string,
+        recordType: HealthRecordType
+    ): Promise<boolean>;
+
     /**
      * Creates a new consent request
      */

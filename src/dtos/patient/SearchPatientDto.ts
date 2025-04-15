@@ -1,41 +1,14 @@
 import { IsString, IsOptional, IsEnum, IsDate } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class SearchPatientDto {
-  @IsString()
-  @IsOptional()
+export interface SearchPatientDto {
   name?: string;
-
-  @IsString()
-  @IsOptional()
-  abhaNumber?: string;
-
-  @IsDate()
-  @Type(() => Date)
-  @IsOptional()
+  abhaId?: string;
+  gender?: string;
   dateOfBirth?: Date;
-
-  @IsEnum(['M', 'F', 'O'])
-  @IsOptional()
-  gender?: 'M' | 'F' | 'O';
-
-  @IsString()
-  @IsOptional()
-  phone?: string;
-
-  @IsString()
-  @IsOptional()
+  phoneNumber?: string;
   email?: string;
-
-  @IsString()
-  @IsOptional()
-  district?: string;
-
-  @IsString()
-  @IsOptional()
-  state?: string;
-
-  @IsString()
-  @IsOptional()
-  pincode?: string;
+  address?: string;
+  limit?: number;
+  offset?: number;
 } 

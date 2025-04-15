@@ -1,26 +1,15 @@
-import { HealthRecordType } from '../../infrastructure/database/entities/enums/HealthRecordType';
-import { RecordStatus } from '../../infrastructure/database/entities/enums/RecordStatus';
+import { HealthRecordType } from '../../services/health-record/types/HealthRecordType';
+import { RecordStatus } from '../../infrastructure/database/entities/HealthRecord.entity';
 
-export class HealthRecordResponseDto {
+export interface HealthRecordResponseDto {
     id: string;
     patientId: string;
     careContextId: string;
     recordType: HealthRecordType;
-    data: Record<string, any>;
-    metadata?: {
-        source?: string;
-        facility?: string;
-        department?: string;
-        practitioner?: string;
-        deviceId?: string;
-        tags?: string[];
-    };
+    data: Record<string, unknown>;
+    metadata: Record<string, unknown>;
     status: RecordStatus;
-    version: number;
+    version: string;
     createdAt: Date;
     updatedAt: Date;
-
-    constructor(partial: Partial<HealthRecordResponseDto>) {
-        Object.assign(this, partial);
-    }
 } 

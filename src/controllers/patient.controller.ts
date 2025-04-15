@@ -1,6 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { ValidationError } from '../utils/errors';
 import { authenticateRequest } from '../middleware/auth.middleware';
+import { PatientService } from '../services/patient/patient.service';
+import { PatientSearchService } from '../services/patient/patient-search.service';
+import { Logger } from '../services/logging/Logger';
+import { SearchPatientDto } from '../dtos/patient/SearchPatientDto';
 
 const router = Router();
 

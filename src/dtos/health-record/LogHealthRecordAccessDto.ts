@@ -16,6 +16,12 @@ class AccessMetadataDto {
     deviceId?: string;
 }
 
+export interface LogHealthRecordAccessDto {
+    recordId: string;
+    userId: string;
+    purpose: string;
+}
+
 export class LogHealthRecordAccessDto {
     @IsUUID()
     healthRecordId: string;

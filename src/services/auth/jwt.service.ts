@@ -1,56 +1,53 @@
-import jwt, { SignOptions, Secret } from 'jsonwebtoken';
-import { UnauthorizedError } from '@/utils/errors';
-
-const JWT_SECRET: Secret = process.env.JWT_SECRET || 'test-secret';
-const JWT_EXPIRY: jwt.SignOptions['expiresIn'] = process.env.JWT_EXPIRY || '1h';
-const REFRESH_TOKEN_EXPIRY: jwt.SignOptions['expiresIn'] = process.env.REFRESH_TOKEN_EXPIRY || '7d';
+import jwt from 'jsonwebtoken';
+import { Logger } from '../logging/Logger';
 
 interface JwtPayload {
-  clientId: string;
-  type: 'access' | 'refresh';
-  [key: string]: any;
+  userId: string;
+  tokenId?: string;
 }
 
 export class JwtService {
-  generateAccessToken(client: { clientId: string }): string {
-    const options: SignOptions = { expiresIn: JWT_EXPIRY };
-    return jwt.sign(
-      { clientId: client.clientId, type: 'access' } as JwtPayload,
-      JWT_SECRET,
-      options
-    );
+  private readonly secret: string;
+  private readonly accessTokenExpiry: string;
+  private readonly refreshTokenExpiry: string;
+  private logger: Logger;
+
+  constructor() {
+    this.secret = process.env.JWT_SECRET || 'your-secret-key';
+    this.accessTokenExpiry = process.env.JWT_ACCESS_EXPIRY || '15m';
+    this.refreshTokenExpiry = process.env.JWT_REFRESH_EXPIRY || '30d';
+    this.logger = new Logger('JwtService');
   }
 
-  generateRefreshToken(client: { clientId: string }): string {
-    const options: SignOptions = { expiresIn: REFRESH_TOKEN_EXPIRY };
-    return jwt.sign(
-      { clientId: client.clientId, type: 'refresh' } as JwtPayload,
-      JWT_SECRET,
-      options
-    );
+  generateAccessToken(userId: string): string {
+    const payload: JwtPayload = { userId };
+    return jwt.sign(payload, this.secret, {
+      expiresIn: this.accessTokenExpiry
+    });
+  }
+
+  generateRefreshToken(userId: string, tokenId: string): string {
+    const payload: JwtPayload = { userId, tokenId };
+    return jwt.sign(payload, this.secret, {
+      expiresIn: this.refreshTokenExpiry
+    });
   }
 
   verifyAccessToken(token: string): JwtPayload {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-      if (decoded.type !== 'access') {
-        throw new UnauthorizedError('Invalid token type');
-      }
-      return decoded;
+      return jwt.verify(token, this.secret) as JwtPayload;
     } catch (error) {
-      throw new UnauthorizedError('Invalid token');
+      this.logger.error('Error verifying access token', { error });
+      throw new Error('Invalid access token');
     }
   }
 
   verifyRefreshToken(token: string): JwtPayload {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-      if (decoded.type !== 'refresh') {
-        throw new UnauthorizedError('Invalid token type');
-      }
-      return decoded;
+      return jwt.verify(token, this.secret) as JwtPayload;
     } catch (error) {
-      throw new UnauthorizedError('Invalid refresh token');
+      this.logger.error('Error verifying refresh token', { error });
+      throw new Error('Invalid refresh token');
     }
   }
 } 
